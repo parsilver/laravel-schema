@@ -2,9 +2,9 @@
 
 namespace Farzai\LaravelSchema;
 
+use Farzai\LaravelSchema\Commands\LaravelSchemaCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
-use Farzai\LaravelSchema\Commands\LaravelSchemaCommand;
 
 class LaravelSchemaServiceProvider extends PackageServiceProvider
 {

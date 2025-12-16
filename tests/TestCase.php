@@ -2,9 +2,9 @@
 
 namespace Farzai\LaravelSchema\Tests;
 
+use Farzai\LaravelSchema\LaravelSchemaServiceProvider;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Orchestra\Testbench\TestCase as Orchestra;
-use Farzai\LaravelSchema\LaravelSchemaServiceProvider;
 
 class TestCase extends Orchestra
 {
