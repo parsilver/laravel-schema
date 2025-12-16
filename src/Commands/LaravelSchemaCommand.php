@@ -1,12 +1,12 @@
 <?php
 
-namespace VendorName\Skeleton\Commands;
+namespace Farzai\LaravelSchema\Commands;
 
 use Illuminate\Console\Command;
 
-class SkeletonCommand extends Command
+class LaravelSchemaCommand extends Command
 {
-    public $signature = 'skeleton';
+    public $signature = 'laravel-schema';
 
     public $description = 'My command';
 
