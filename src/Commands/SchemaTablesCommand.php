@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Farzai\LaravelSchema\Commands;
 
-use Farzai\LaravelSchema\Schema\Table;
 use Farzai\LaravelSchema\SchemaInspector;
 use Illuminate\Console\Command;
 
