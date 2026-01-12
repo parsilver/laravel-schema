@@ -10,3 +10,7 @@ parameters:
     tmpDir: build/phpstan
     checkOctaneCompatibility: true
     checkModelProperties: true
+    ignoreErrors:
+        # Package config files can use env() - they get published to app's config directory
+        - identifier: larastan.noEnvCallsOutsideOfConfig
+          path: config/*

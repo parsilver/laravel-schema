@@ -1,0 +1,135 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply h-full;
+  }
+
+  body {
+    @apply h-full antialiased;
+  }
+
+  #app {
+    @apply h-full;
+  }
+}
+
+@layer components {
+  .badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium;
+  }
+
+  .badge-added {
+    @apply bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200;
+  }
+
+  .badge-removed {
+    @apply bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200;
+  }
+
+  .badge-modified {
+    @apply bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200;
+  }
+
+  .badge-unchanged {
+    @apply bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200;
+  }
+}
+
+/* React Flow Customizations */
+.react-flow__node-tableNode {
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.react-flow__handle {
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.react-flow__node:hover .react-flow__handle {
+  opacity: 1;
+}
+
+.react-flow__edge.selected path {
+  stroke-width: 3px;
+}
+
+.react-flow__controls {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.react-flow__controls-button {
+  border: none;
+  background: white;
+}
+
+.dark .react-flow__controls-button {
+  background: #1f2937;
+  fill: #9ca3af;
+}
+
+.dark .react-flow__controls-button:hover {
+  background: #374151;
+}
+
+.dark .react-flow__background pattern circle {
+  fill: #374151;
+}
+
+/* Scrollbar styling for table nodes */
+.react-flow__node-tableNode ::-webkit-scrollbar {
+  width: 4px;
+}
+
+.react-flow__node-tableNode ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.react-flow__node-tableNode ::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 2px;
+}
+
+.dark .react-flow__node-tableNode ::-webkit-scrollbar-thumb {
+  background: #4b5563;
+}
+
+/* Reduced motion support for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .react-flow__handle {
+    transition: none;
+  }
+
+  .animate-spin {
+    animation: none !important;
+  }
+}
+
+/* Focus visible styles for better keyboard navigation */
+:focus-visible {
+  @apply outline-2 outline-offset-2 outline-indigo-500;
+}
+
+button:focus-visible,
+a:focus-visible {
+  @apply ring-2 ring-indigo-500 ring-offset-2;
+}
+
+.dark button:focus-visible,
+.dark a:focus-visible {
+  @apply ring-offset-gray-900;
+}

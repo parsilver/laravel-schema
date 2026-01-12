@@ -15,14 +15,44 @@ concurrency:
 
 jobs:
   test:
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 5
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: password
+          MYSQL_DATABASE: testing
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: testing
+        ports:
+          - 5432:5432
+        options: --health-cmd=pg_isready --health-interval=10s --health-timeout=5s --health-retries=3
+
+      sqlsrv:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: Y
+          MSSQL_SA_PASSWORD: Password123!
+        ports:
+          - 1433:1433
+        options: --health-cmd="/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'Password123!' -C -Q 'SELECT 1'" --health-interval=10s --health-timeout=5s --health-retries=5
+
     strategy:
       fail-fast: true
       matrix:
-        os: [ubuntu-latest, windows-latest]
         php: [8.4, 8.3]
         laravel: [12.*, 11.*]
+        database: [sqlite, mysql, pgsql, sqlsrv]
         stability: [prefer-lowest, prefer-stable]
         include:
           - laravel: 12.*
@@ -30,17 +60,23 @@ jobs:
           - laravel: 11.*
             testbench: 9.*
 
-    name: P${{ matrix.php }} - L${{ matrix.laravel }} - ${{ matrix.stability }} - ${{ matrix.os }}
+    name: P${{ matrix.php }} - L${{ matrix.laravel }} - ${{ matrix.database }} - ${{ matrix.stability }}
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
+
+      - name: Create SQL Server database
+        if: matrix.database == 'sqlsrv'
+        run: |
+          sleep 10
+          /opt/mssql-tools18/bin/sqlcmd -S 127.0.0.1 -U sa -P 'Password123!' -C -Q "CREATE DATABASE testing"
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv, imagick, fileinfo
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, bcmath, soap, intl, gd, exif, iconv, fileinfo, pdo_sqlite, pdo_mysql, pdo_pgsql, pdo_sqlsrv, sqlsrv
           coverage: none
 
       - name: Setup problem matchers
@@ -57,4 +93,10 @@ jobs:
         run: composer show -D
 
       - name: Execute tests
+        env:
+          DB_DRIVER: ${{ matrix.database }}
+          DB_HOST: 127.0.0.1
+          DB_DATABASE: testing
+          DB_USERNAME: ${{ matrix.database == 'mysql' && 'root' || matrix.database == 'pgsql' && 'postgres' || matrix.database == 'sqlsrv' && 'sa' || '' }}
+          DB_PASSWORD: ${{ matrix.database == 'mysql' && 'password' || matrix.database == 'pgsql' && 'password' || matrix.database == 'sqlsrv' && 'Password123!' || '' }}
         run: vendor/bin/pest --ci

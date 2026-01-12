@@ -1,10 +1,14 @@
 {
-    "name": "parsilver/laravel-schema",
-    "description": "This is my package laravel-schema",
+    "name": "farzai/laravel-schema",
+    "description": "Visualize and compare database schemas between Laravel migrations and your database",
     "keywords": [
-        "Farzai",
+        "farzai",
         "laravel",
-        "laravel-schema"
+        "schema",
+        "database",
+        "migrations",
+        "visualization",
+        "diff"
     ],
     "homepage": "https://github.com/parsilver/laravel-schema",
     "license": "MIT",
@@ -18,7 +22,8 @@
     "require": {
         "php": "^8.4",
         "spatie/laravel-package-tools": "^1.16",
-        "illuminate/contracts": "^11.0||^12.0"
+        "illuminate/contracts": "^11.0||^12.0",
+        "nikic/php-parser": "^5.0"
     },
     "require-dev": {
         "laravel/pint": "^1.14",
@@ -51,7 +56,11 @@
         "analyse": "vendor/bin/phpstan analyse",
         "test": "vendor/bin/pest",
         "test-coverage": "vendor/bin/pest --coverage",
-        "format": "vendor/bin/pint"
+        "format": "vendor/bin/pint",
+        "dev": [
+            "@php vendor/bin/testbench vendor:publish --tag=laravel-schema-assets --force",
+            "@php vendor/bin/testbench serve"
+        ]
     },
     "config": {
         "sort-packages": true,

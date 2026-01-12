@@ -2,9 +2,9 @@
 
 namespace Farzai\LaravelSchema\Tests;
 
+use Farzai\LaravelSchema\LaravelSchemaServiceProvider;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Orchestra\Testbench\TestCase as Orchestra;
-use Farzai\LaravelSchema\LaravelSchemaServiceProvider;
 
 class TestCase extends Orchestra
 {
@@ -26,12 +26,48 @@ class TestCase extends Orchestra
 
     public function getEnvironmentSetUp($app)
     {
+        $driver = env('DB_DRIVER', 'sqlite');
+
         config()->set('database.default', 'testing');
 
-        /*
-         foreach (\Illuminate\Support\Facades\File::allFiles(__DIR__ . '/../database/migrations') as $migration) {
-            (include $migration->getRealPath())->up();
-         }
-         */
+        match ($driver) {
+            'mysql' => config()->set('database.connections.testing', [
+                'driver' => 'mysql',
+                'host' => env('DB_HOST', '127.0.0.1'),
+                'port' => env('DB_PORT', '3306'),
+                'database' => env('DB_DATABASE', 'testing'),
+                'username' => env('DB_USERNAME', 'root'),
+                'password' => env('DB_PASSWORD', ''),
+                'charset' => 'utf8mb4',
+                'collation' => 'utf8mb4_unicode_ci',
+                'prefix' => '',
+            ]),
+            'pgsql' => config()->set('database.connections.testing', [
+                'driver' => 'pgsql',
+                'host' => env('DB_HOST', '127.0.0.1'),
+                'port' => env('DB_PORT', '5432'),
+                'database' => env('DB_DATABASE', 'testing'),
+                'username' => env('DB_USERNAME', 'postgres'),
+                'password' => env('DB_PASSWORD', ''),
+                'charset' => 'utf8',
+                'prefix' => '',
+                'schema' => 'public',
+            ]),
+            'sqlsrv' => config()->set('database.connections.testing', [
+                'driver' => 'sqlsrv',
+                'host' => env('DB_HOST', '127.0.0.1'),
+                'port' => env('DB_PORT', '1433'),
+                'database' => env('DB_DATABASE', 'testing'),
+                'username' => env('DB_USERNAME', 'sa'),
+                'password' => env('DB_PASSWORD', ''),
+                'charset' => 'utf8',
+                'prefix' => '',
+            ]),
+            default => config()->set('database.connections.testing', [
+                'driver' => 'sqlite',
+                'database' => ':memory:',
+                'prefix' => '',
+            ]),
+        };
     }
 }
