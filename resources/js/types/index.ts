@@ -118,14 +118,17 @@ export interface StatusResponse extends SchemaStatus {}
 export interface DiffResponse extends SchemaDiff {}
 
 export interface Migration {
-  name: string
-  batch: number
-  ran: boolean
+  file: string
+  path: string
 }
 
 export interface MigrationsResponse {
   migrations: Migration[]
+  count: number
+  path: string
 }
+
+export type ViewMode = 'diff' | 'database' | 'migrations'
 
 // Toast types
 export interface Toast {
@@ -137,8 +140,10 @@ export interface Toast {
 // Schema Context types
 export interface SchemaContextValue {
   tables: Table[]
+  migrations: Migration[]
   status: SchemaStatus | null
   diff: SchemaDiff | null
+  viewMode: ViewMode
   loading: boolean
   error: string | null
   lastRefreshed: Date | null
@@ -147,5 +152,7 @@ export interface SchemaContextValue {
   fetchTables: () => Promise<void>
   fetchStatus: () => Promise<void>
   fetchDiff: () => Promise<void>
+  fetchMigrations: () => Promise<void>
+  setViewMode: (mode: ViewMode) => void
   clearToast: () => void
 }

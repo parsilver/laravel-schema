@@ -29,7 +29,7 @@ const PAN_STEP = 50
 const ZOOM_STEP = 0.2
 
 export default function ERDiagram() {
-  const { tables, diff, loading, error, refresh } = useSchema()
+  const { tables, diff, viewMode, loading, error, refresh } = useSchema()
   const [nodes, setNodes, onNodesChange] = useNodesState<TableNode>([])
   const [edges, setEdges, onEdgesChange] = useEdgesState<RelationshipEdge>([])
   const { fitView, zoomIn, zoomOut, getViewport, setViewport } = useReactFlow()
@@ -48,7 +48,25 @@ export default function ERDiagram() {
 
     const rawNodes = tablesToNodes(tables, diff)
     const rawEdges = foreignKeysToEdges(tables, diff)
-    const { nodes: layoutedNodes, edges: layoutedEdges } = calculateLayout(rawNodes, rawEdges)
+
+    // Filter nodes based on viewMode
+    let filteredNodes = rawNodes
+    if (viewMode === 'database') {
+      // Show only tables that exist in the database (not 'removed')
+      filteredNodes = rawNodes.filter(node => node.data.status !== 'removed')
+    } else if (viewMode === 'migrations') {
+      // Show only tables defined in migrations (not 'added' - those are DB-only)
+      filteredNodes = rawNodes.filter(node => node.data.status !== 'added')
+    }
+    // 'diff' mode shows all nodes
+
+    // Filter edges to only include those connecting visible nodes
+    const visibleTableNames = new Set(filteredNodes.map(n => n.id))
+    const filteredEdges = rawEdges.filter(
+      edge => visibleTableNames.has(edge.source) && visibleTableNames.has(edge.target)
+    )
+
+    const { nodes: layoutedNodes, edges: layoutedEdges } = calculateLayout(filteredNodes, filteredEdges)
 
     setNodes(layoutedNodes)
     setEdges(layoutedEdges)
@@ -56,7 +74,7 @@ export default function ERDiagram() {
     setTimeout(() => {
       fitView({ padding: 0.2 })
     }, 50)
-  }, [tables, diff, setNodes, setEdges, fitView])
+  }, [tables, diff, viewMode, setNodes, setEdges, fitView])
 
   const handleFitView = useCallback(() => {
     fitView({ padding: 0.2, duration: 300 })
@@ -173,42 +191,64 @@ export default function ERDiagram() {
     >
       <EdgeMarkers />
 
-      {hasDifferences && (
-        <div className="absolute top-4 left-4 z-10 flex items-center gap-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 px-4 py-2">
-          <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400">
+      {/* View mode indicator */}
+      <div className="absolute top-4 left-4 z-10 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 px-4 py-2">
+        {viewMode === 'database' && (
+          <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7c0-2-1-3-3-3H7c-2 0-3 1-3 3z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 12h16" />
             </svg>
-            <span className="font-medium text-sm">Schema has differences</span>
+            <span className="font-medium text-sm">Current Database</span>
           </div>
-          <div className="flex items-center gap-3 text-xs">
-            {summary.added_tables > 0 && (
-              <span className="text-green-600 dark:text-green-400">
-                +{summary.added_tables} added
-              </span>
-            )}
-            {summary.removed_tables > 0 && (
-              <span className="text-red-600 dark:text-red-400">
-                -{summary.removed_tables} removed
-              </span>
-            )}
-            {summary.modified_tables > 0 && (
-              <span className="text-yellow-600 dark:text-yellow-400">
-                ~{summary.modified_tables} modified
-              </span>
-            )}
+        )}
+        {viewMode === 'migrations' && (
+          <div className="flex items-center gap-2 text-purple-600 dark:text-purple-400">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <span className="font-medium text-sm">From Migrations</span>
           </div>
-        </div>
-      )}
-
-      {!hasDifferences && (
-        <div className="absolute top-4 left-4 z-10 flex items-center gap-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 px-4 py-2 text-green-600 dark:text-green-400">
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-          </svg>
-          <span className="font-medium text-sm">Schema is in sync</span>
-        </div>
-      )}
+        )}
+        {viewMode === 'diff' && (
+          <>
+            {hasDifferences ? (
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <span className="font-medium text-sm">Schema has differences</span>
+                </div>
+                <div className="flex items-center gap-3 text-xs">
+                  {summary.added_tables > 0 && (
+                    <span className="text-green-600 dark:text-green-400">
+                      +{summary.added_tables} added
+                    </span>
+                  )}
+                  {summary.removed_tables > 0 && (
+                    <span className="text-red-600 dark:text-red-400">
+                      -{summary.removed_tables} removed
+                    </span>
+                  )}
+                  {summary.modified_tables > 0 && (
+                    <span className="text-yellow-600 dark:text-yellow-400">
+                      ~{summary.modified_tables} modified
+                    </span>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span className="font-medium text-sm">Schema is in sync</span>
+              </div>
+            )}
+          </>
+        )}
+      </div>
 
       <ReactFlow
         nodes={nodes}

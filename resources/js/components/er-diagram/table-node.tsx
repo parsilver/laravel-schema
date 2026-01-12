@@ -2,6 +2,7 @@ import { memo, useState, useMemo } from 'react'
 import { Handle, Position } from '@xyflow/react'
 import type { NodeProps } from '@xyflow/react'
 import type { TableNodeData } from '../../utils/transform'
+import { useSchema } from '../../context/schema-context'
 
 const COLUMN_THRESHOLD = 10 // Show expand button when columns exceed this
 
@@ -36,7 +37,12 @@ const columnStatusIndicators = {
 
 function TableNode({ data }: NodeProps<TableNodeData>) {
   const { table, status, columnDiffs } = data
-  const style = statusStyles[status]
+  const { viewMode } = useSchema()
+
+  // In non-diff modes, show all tables as unchanged (no status indicators)
+  const effectiveStatus = viewMode === 'diff' ? status : 'unchanged'
+  const style = statusStyles[effectiveStatus]
+  const showDiffIndicators = viewMode === 'diff'
   const [isExpanded, setIsExpanded] = useState(false)
 
   const primaryKeyColumns = table.indexes
@@ -72,7 +78,7 @@ function TableNode({ data }: NodeProps<TableNodeData>) {
             {table.name}
           </span>
         </div>
-        {status !== 'unchanged' && (
+        {showDiffIndicators && status !== 'unchanged' && (
           <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${style.badge}`}>
             {status}
           </span>
@@ -107,7 +113,7 @@ function TableNode({ data }: NodeProps<TableNodeData>) {
                   ?
                 </span>
               )}
-              {indicator && (
+              {showDiffIndicators && indicator && (
                 <span className={`font-bold ${indicator.color}`} title={columnStatus}>
                   {indicator.symbol}
                 </span>

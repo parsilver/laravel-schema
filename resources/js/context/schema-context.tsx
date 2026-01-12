@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
 import { api } from '../api/client'
-import type { Table, SchemaStatus, SchemaDiff, SchemaContextValue, Toast } from '../types'
+import type { Table, SchemaStatus, SchemaDiff, SchemaContextValue, Toast, Migration, ViewMode } from '../types'
 
 const SchemaContext = createContext<SchemaContextValue | null>(null)
 
@@ -10,8 +10,10 @@ interface SchemaProviderProps {
 
 export function SchemaProvider({ children }: SchemaProviderProps) {
   const [tables, setTables] = useState<Table[]>([])
+  const [migrations, setMigrations] = useState<Migration[]>([])
   const [status, setStatus] = useState<SchemaStatus | null>(null)
   const [diff, setDiff] = useState<SchemaDiff | null>(null)
+  const [viewMode, setViewMode] = useState<ViewMode>('diff')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null)
@@ -48,13 +50,24 @@ export function SchemaProvider({ children }: SchemaProviderProps) {
     }
   }, [])
 
+  const fetchMigrations = useCallback(async () => {
+    try {
+      const response = await api.getMigrations()
+      setMigrations(response.data.migrations || [])
+    } catch (err) {
+      // Log but don't block - migrations are supplementary
+      console.warn('Failed to fetch migrations:', err)
+      setMigrations([])
+    }
+  }, [])
+
   const refresh = useCallback(async () => {
     setLoading(true)
     setError(null)
     setToast(null)
     try {
       await api.refresh()
-      await Promise.all([fetchTables(), fetchStatus(), fetchDiff()])
+      await Promise.all([fetchTables(), fetchStatus(), fetchDiff(), fetchMigrations()])
       setLastRefreshed(new Date())
       setToast({
         id: Date.now().toString(),
@@ -73,20 +86,20 @@ export function SchemaProvider({ children }: SchemaProviderProps) {
     } finally {
       setLoading(false)
     }
-  }, [fetchTables, fetchStatus, fetchDiff])
+  }, [fetchTables, fetchStatus, fetchDiff, fetchMigrations])
 
   const initialize = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
-      await Promise.all([fetchTables(), fetchStatus(), fetchDiff()])
+      await Promise.all([fetchTables(), fetchStatus(), fetchDiff(), fetchMigrations()])
       setLastRefreshed(new Date())
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to initialize')
     } finally {
       setLoading(false)
     }
-  }, [fetchTables, fetchStatus, fetchDiff])
+  }, [fetchTables, fetchStatus, fetchDiff, fetchMigrations])
 
   useEffect(() => {
     initialize()
@@ -94,8 +107,10 @@ export function SchemaProvider({ children }: SchemaProviderProps) {
 
   const value: SchemaContextValue = {
     tables,
+    migrations,
     status,
     diff,
+    viewMode,
     loading,
     error,
     lastRefreshed,
@@ -104,6 +119,8 @@ export function SchemaProvider({ children }: SchemaProviderProps) {
     fetchTables,
     fetchStatus,
     fetchDiff,
+    fetchMigrations,
+    setViewMode,
     clearToast
   }
 

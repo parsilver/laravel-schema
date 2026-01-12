@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace Farzai\LaravelSchema;
 
 use Farzai\LaravelSchema\Commands\LaravelSchemaCommand;
+use Farzai\LaravelSchema\Commands\SchemaDiffCommand;
+use Farzai\LaravelSchema\Commands\SchemaStatusCommand;
+use Farzai\LaravelSchema\Commands\SchemaTablesCommand;
 use Farzai\LaravelSchema\Contracts\IntrospectorFactoryInterface;
 use Farzai\LaravelSchema\Contracts\MigrationParserInterface;
 use Farzai\LaravelSchema\Contracts\SchemaDifferInterface;
@@ -23,7 +26,10 @@ class LaravelSchemaServiceProvider extends PackageServiceProvider
             ->name('laravel-schema')
             ->hasConfigFile()
             ->hasViews()
-            ->hasCommand(LaravelSchemaCommand::class);
+            ->hasCommand(LaravelSchemaCommand::class)
+            ->hasCommand(SchemaStatusCommand::class)
+            ->hasCommand(SchemaDiffCommand::class)
+            ->hasCommand(SchemaTablesCommand::class);
     }
 
     public function packageRegistered(): void
