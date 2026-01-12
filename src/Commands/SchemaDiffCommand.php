@@ -169,8 +169,9 @@ class SchemaDiffCommand extends Command
             default => 'white',
         };
 
-        $type = $columnDiff->actual?->type->value ?? $columnDiff->expected?->type->value ?? 'unknown';
-        $nullable = ($columnDiff->actual?->nullable ?? $columnDiff->expected?->nullable) ? '?' : '';
+        $column = $columnDiff->actual ?? $columnDiff->expected;
+        $type = $column?->type->value ?? 'unknown';
+        $nullable = ($column->nullable ?? false) ? '?' : '';
 
         if ($prefix === '~' && ! empty($columnDiff->changes)) {
             // Show what changed for modified columns
